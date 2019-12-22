@@ -1,0 +1,16 @@
+<!--The content below is only a placeholder and can be replaced.-->
+<div style="text-align:center">
+  <h1>
+    {{ title }}
+  </h1>
+
+    <div *ngIf="isDataAvailable()">
+      <div *ngFor="let tstat of thermostats">
+        <app-output-graph [thermostat]="tstat"
+                          [onTstatUpdate]="onTstatUpdate"
+                          [onWeatherUpdate]="onWeatherUpdate"></app-output-graph>
+      </div>
+    </div>
+
+</div>
+<router-outlet></router-outlet>
