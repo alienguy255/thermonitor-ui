@@ -1,5 +1,6 @@
 # ThermonitorUi
-Front end code for thermonitor application to track indoor and outdoor termperatures over time. 
+Front end code for thermonitor application which tracks indoor and outdoor temperatures over time. 
+
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 8.2.0.
 
 ## Development server
