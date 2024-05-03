@@ -16,9 +16,10 @@
             "outputPath": "dist/thermonitor-ui",
             "index": "src/index.html",
             "main": "src/main.ts",
-            "polyfills": "src/polyfills.ts",
+            "polyfills": ["zone.js"],
             "tsConfig": "tsconfig.app.json",
-            "aot": false,
+            "aot": true,
+            "buildOptimizer": true,
             "assets": [
               "src/favicon.ico",
               "src/assets"
@@ -81,7 +82,7 @@
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
             "main": "src/test.ts",
-            "polyfills": "src/polyfills.ts",
+            "polyfills": ["zone.js"],
             "tsConfig": "tsconfig.spec.json",
             "karmaConfig": "karma.conf.js",
             "assets": [
@@ -121,5 +122,8 @@
         }
       }
     }},
-  "defaultProject": "thermonitor-ui"
+  "defaultProject": "thermonitor-ui",
+  "cli": {
+    "analytics": false
+  }
 }

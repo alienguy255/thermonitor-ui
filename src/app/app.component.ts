@@ -1,9 +1,6 @@
-import {Component, EventEmitter, OnInit, OnChanges} from '@angular/core';
+import {Component, OnInit, OnChanges} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
-import {Thermostat, ThermostatUpdateEvent, WeatherUpdateEvent} from 'src/app/models/thermostat';
-
-import * as Stomp from 'stompjs';
-import * as SockJS from 'sockjs-client';
+import {Location} from 'src/app/models/thermostat';
 
 @Component({
   selector: 'app-root',
@@ -11,59 +8,19 @@ import * as SockJS from 'sockjs-client';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit, OnChanges {
-  title = 'Thermostat Dashboard';
 
-  private onTstatUpdate: EventEmitter<ThermostatUpdateEvent> = new EventEmitter<ThermostatUpdateEvent>();
-  private onWeatherUpdate: EventEmitter<WeatherUpdateEvent> = new EventEmitter<WeatherUpdateEvent>();
-
-  private stompClient;
-
-  thermostats: Thermostat[] = [];
+  locations: Location[] = [];
 
   constructor(private http: HttpClient) { }
 
   ngOnInit() {
-    const ws = new SockJS('http://localhost:8081/websocket');
-    this.stompClient = Stomp.over(ws);
-    const that = this;
-
-    this.stompClient.connect({}, () => {
-      // subscribe to tstat updates:
-      that.stompClient.subscribe('/topic/tstat-updates', (update) => {
-        const updateBody = JSON.parse(update.body);
-
-        const tstatUpdateEvent: ThermostatUpdateEvent = {
-          thermostatId: updateBody.thermostatId,
-          tstate: updateBody.tstate,
-          currentTemp: updateBody.currentTemp,
-          targetTemp: updateBody.targetTemp,
-          time: updateBody.time
-        };
-
-        that.onTstatUpdate.emit(tstatUpdateEvent);
-      });
-
-      // subscribe to current outdoor temp updates:
-      that.stompClient.subscribe('/topic/weather-updates', (update) => {
-        console.log('received weather update: ' + update);
-        const updateBody = JSON.parse(update.body);
-
-        const weatherUpdateEvent: WeatherUpdateEvent = {
-          currentTemp: updateBody.currentTemp,
-          time: updateBody.time
-        };
-
-        that.onWeatherUpdate.emit(weatherUpdateEvent);
-      });
-    });
-
-    // load all thermostats from server, render chart per tstat
-    this.getApiResponse('http://localhost:8081/thermostats').then(
-      tstats => {
-        this.thermostats = tstats;
+    // load all locations from server, render group per location
+    this.getApiResponse('http://localhost:8081/locations').then(
+      locationList => {
+        this.locations = locationList;
       },
       error => {
-        console.log('An error occurred retrieving thermostat data from the server. ' + error);
+        console.log('An error occurred retrieving location data from the server. ' + error);
       });
   }
 
@@ -72,7 +29,7 @@ export class AppComponent implements OnInit, OnChanges {
   }
 
   isDataAvailable() {
-    return this.thermostats.length > 0;
+    return this.locations.length > 0;
   }
 
   getApiResponse(url) {

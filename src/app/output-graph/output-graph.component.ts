@@ -24,14 +24,16 @@ export class OutputGraphComponent implements OnInit {
 
   private stockChart: Highcharts.Chart;
 
-  @Input() private thermostat: Thermostat;
-  @Input() private onTstatUpdate: EventEmitter<ThermostatUpdateEvent>;
-  @Input() private onWeatherUpdate: EventEmitter<WeatherUpdateEvent>;
+  @Input() thermostat: Thermostat;
+  @Input() onTstatUpdate: EventEmitter<ThermostatUpdateEvent>;
+  @Input() onWeatherUpdate: EventEmitter<WeatherUpdateEvent>;
 
   public options: any = {
     chart: {
       type: 'line',
-      height: 400
+      height: 400,
+      styledMode: true,
+      spacing: [15, 15, 15, 15]
     },
     title: {
       text: 'current temp chart'
@@ -45,7 +47,7 @@ export class OutputGraphComponent implements OnInit {
           return point.series.name !== 'Runtime' ? s + '<br/>' + point.series.name + ': ' + point.y.toFixed(1) + '°F'
               : s + '<br/>' + point.series.name + ': ' + point.y.toFixed(0) + 'm';
           // TODO: figure out how to use non-utc time instead of subtracting 5 hours
-        }, '<b>' + Highcharts.dateFormat('%e %b %y %H:%M:%S', this.x - (60 * 60 * 1000 * 5)) + '</b>');
+        }, '<b>' + Highcharts.dateFormat('%e %b %y %H:%M:%S', this.x - (60 * 60 * 1000 * 4)) + '</b>');
       }
     },
     // TODO: figure out how to select and drag with cursor like original version does....onSetExtreemes() maybe?
@@ -66,6 +68,11 @@ export class OutputGraphComponent implements OnInit {
       ],
       selected: 1
     },
+    xAxis: {
+      events: {
+        setExtremes: this.syncExtremes
+      }
+    },
     yAxis: [{
       title: {
         text: 'Temperature (°F)'
@@ -80,7 +87,7 @@ export class OutputGraphComponent implements OnInit {
     }],
     time: {
       useUTC: false,
-      timezoneOffset: 5 * 60
+      timezoneOffset: 4 * 60
     },
     series: [
       {
@@ -132,8 +139,9 @@ export class OutputGraphComponent implements OnInit {
 
         this.stockChart.series[0].addPoint([tstatUpdateEvent.time, tstatUpdateEvent.currentTemp], true, true);
         this.stockChart.series[1].addPoint([tstatUpdateEvent.time, tstatUpdateEvent.targetTemp], true, true);
-
         this.stockChart.series[3].addPoint([tstatUpdateEvent.time, tstatUpdateEvent.tstate], true, true);
+
+        // TODO: should oldest point be removed? This will continue to grow memory used by the browser the longer this is updating
 
         // change status in chart title depending on if the event indicates running or not (tstate of 1 is running, 0 is idle)
         if (tstatUpdateEvent.tstate === 1) {
@@ -154,9 +162,9 @@ export class OutputGraphComponent implements OnInit {
     const toTime = new Date();
 
     // TODO: find better way rather than loading weather data for every tstat
-    this.getApiResponse('http://localhost:8081/thermostats/' + this.thermostat.id + '/samples?fromTime=' + fromTime.getTime() + '&toTime=' + toTime.getTime()).then(
+    this.getApiResponse('http://localhost:8081/thermostats/' + this.thermostat.id + '/samples-v2?fromTime=' + fromTime.getTime() + '&toTime=' + toTime.getTime()).then(
       samples => {
-        this.getApiResponse('http://localhost:8081/weather/' + this.thermostat.location.id + '/samples?fromTime=' + fromTime.getTime() + '&toTime=' + toTime.getTime()).then(
+        this.getApiResponse('http://localhost:8081/weather/' + this.thermostat.locationId + '/samples?fromTime=' + fromTime.getTime() + '&toTime=' + toTime.getTime()).then(
             weatherSamples => {
               this.renderChart(samples, weatherSamples, this.thermostat);
             },
@@ -177,24 +185,45 @@ export class OutputGraphComponent implements OnInit {
       });
   }
 
+  syncExtremes(e) {
+    var thisChart = this.stockChart;
+
+    if (e.trigger !== 'syncExtremes') {
+      Highcharts.each(Highcharts.charts, function(chart) {
+        if (chart !== thisChart) {
+          if (chart.xAxis[0].setExtremes) { // It is null while updating
+            chart.xAxis[0].setExtremes(
+              e.min,
+              e.max,
+              undefined,
+              false, {
+                trigger: 'syncExtremes'
+              }
+            );
+          }
+        }
+      });
+    }
+  }
+
   renderChart(data, weatherSamples, tstat) {
     const currentTempData = [];
     const targetTempData = [];
     const runtimeData = [];
-    for(var i = 0; i < data.length; i++){
+    for(var i = 0; i < data.samples.length; i++){
       const currentTempVal = [];
-      currentTempVal[0] = data[i].time;
-      currentTempVal[1] = data[i].currentTemp;
+      currentTempVal[0] = data.samples[i].timeMs;
+      currentTempVal[1] = data.samples[i].currentTemp;
       currentTempData[i] = currentTempVal;
 
       const targetTempVal = [];
-      targetTempVal[0] = data[i].time;
-      targetTempVal[1] = data[i].targetTemp;
+      targetTempVal[0] = data.samples[i].timeMs;
+      targetTempVal[1] = data.samples[i].targetTemp;
       targetTempData[i] = targetTempVal;
 
       const tstateVal = [];
-      tstateVal[0] = data[i].time;
-      tstateVal[1] = data[i].tstate;
+      tstateVal[0] = data.samples[i].timeMs;
+      tstateVal[1] = data.samples[i].tstate;
       runtimeData[i] = tstateVal;
     }
     this.options.series[0].data = currentTempData;

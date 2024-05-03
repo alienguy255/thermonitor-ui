@@ -2,7 +2,7 @@ export class Thermostat {
 
   id: string;
 
-  location: Location;
+  locationId: String;
 
   name: string;
 
@@ -14,11 +14,11 @@ export class Location {
 
   id: string;
 
-  zipCode: string;
+  description: string;
 
-  city: string;
+  longitude: string;
 
-  state: string;
+  latitude: string;
 
 }
 

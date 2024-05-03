@@ -5,11 +5,13 @@ import { HttpClientModule } from '@angular/common/http';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { OutputGraphComponent } from './output-graph/output-graph.component';
+import { LocationGroupComponent } from './location-group/location-group.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    OutputGraphComponent
+    OutputGraphComponent,
+    LocationGroupComponent
   ],
   imports: [
     BrowserModule,
