@@ -2,11 +2,13 @@ export class Thermostat {
 
   id: string;
 
-  locationId: String;
+  location: Location;
 
   name: string;
 
-  ipAddress: string;
+  url: string;
+
+  samples: ThermostatSample[];
 
 }
 
@@ -19,6 +21,32 @@ export class Location {
   longitude: string;
 
   latitude: string;
+
+  weatherSamples: WeatherSample[];
+
+  thermostats: Thermostat[];
+
+}
+
+export class ThermostatSample {
+
+    currentTemp: string;
+
+    override: string;
+
+    targetTemp: string;
+
+    tstate: string;
+
+    timeMs: string;
+
+}
+
+export class WeatherSample {
+
+    currentTemp: number;
+
+    timeMs: number;
 
 }
 

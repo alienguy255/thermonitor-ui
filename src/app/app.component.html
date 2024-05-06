@@ -1,7 +1,14 @@
 <div>
+  <p-progressSpinner *ngIf="loading"></p-progressSpinner>
   <div *ngIf="isDataAvailable()">
     <div *ngFor="let location of locations">
-      <location-group [location]="location"></location-group>
+      <h2>{{ location.description }}</h2>
+      <div *ngFor="let tstat of location.thermostats">
+        <app-output-graph [thermostat]="tstat"
+                          [weatherSamples]="location.weatherSamples"
+                          [onTstatUpdate]="onTstatUpdate"
+                          [onWeatherUpdate]="onWeatherUpdate"></app-output-graph>
+      </div>
     </div>
   </div>
 

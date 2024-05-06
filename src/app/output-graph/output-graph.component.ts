@@ -1,14 +1,12 @@
-import { Component, EventEmitter, OnInit, Input } from '@angular/core';
+import { Component, EventEmitter, OnInit, Input, AfterViewInit } from '@angular/core';
 import * as Highcharts from 'highcharts/highstock';
-import { HttpClient } from '@angular/common/http';
-import {Thermostat, ThermostatUpdateEvent, WeatherUpdateEvent} from 'src/app/models/thermostat';
+import {Thermostat, WeatherSample, ThermostatUpdateEvent, WeatherUpdateEvent} from 'src/app/models/thermostat';
 import {Point} from 'highcharts';
 
 declare var require: any;
 let Boost = require('highcharts/modules/boost');
 let noData = require('highcharts/modules/no-data-to-display');
 let More = require('highcharts/highcharts-more');
-
 
 Boost(Highcharts);
 noData(Highcharts);
@@ -25,6 +23,7 @@ export class OutputGraphComponent implements OnInit {
   private stockChart: Highcharts.Chart;
 
   @Input() thermostat: Thermostat;
+  @Input() weatherSamples: WeatherSample[];
   @Input() onTstatUpdate: EventEmitter<ThermostatUpdateEvent>;
   @Input() onWeatherUpdate: EventEmitter<WeatherUpdateEvent>;
 
@@ -130,7 +129,12 @@ export class OutputGraphComponent implements OnInit {
     ]
   };
 
-  constructor(private http: HttpClient) { }
+  constructor() { }
+
+  ngAfterViewInit() {
+      // render in after view to ensure div exists in order to fill the chart
+      this.renderChart(this.thermostat.samples, this.weatherSamples, this.thermostat);
+  }
 
   ngOnInit() {
     this.onTstatUpdate.subscribe(tstatUpdateEvent => {
@@ -156,33 +160,6 @@ export class OutputGraphComponent implements OnInit {
       console.log('Received weather update for time=' + weatherUpdateEvent.time + ', currentTemp=' + weatherUpdateEvent.currentTemp);
       this.stockChart.series[2].addPoint([weatherUpdateEvent.time, weatherUpdateEvent.currentTemp], true, true);
     });
-
-    const fromTime = new Date();
-    fromTime.setDate(fromTime.getDate() - 7);
-    const toTime = new Date();
-
-    // TODO: find better way rather than loading weather data for every tstat
-    this.getApiResponse('http://localhost:8081/thermostats/' + this.thermostat.id + '/samples-v2?fromTime=' + fromTime.getTime() + '&toTime=' + toTime.getTime()).then(
-      samples => {
-        this.getApiResponse('http://localhost:8081/weather/' + this.thermostat.locationId + '/samples?fromTime=' + fromTime.getTime() + '&toTime=' + toTime.getTime()).then(
-            weatherSamples => {
-              this.renderChart(samples, weatherSamples, this.thermostat);
-            },
-            error => {
-              console.log('An error occurred retrieving weather data from the server. ' + error);
-            }
-        );
-      },
-      error => {
-        console.log('An error occurred retrieving thermostat data from the server. ' + error);
-      });
-  }
-
-  getApiResponse(url) {
-    return this.http.get<any>(url, {})
-      .toPromise().then(res => {
-        return res;
-      });
   }
 
   syncExtremes(e) {
@@ -206,24 +183,24 @@ export class OutputGraphComponent implements OnInit {
     }
   }
 
-  renderChart(data, weatherSamples, tstat) {
+  renderChart(thermostatSamples, weatherSamples, tstat) {
     const currentTempData = [];
     const targetTempData = [];
     const runtimeData = [];
-    for(var i = 0; i < data.samples.length; i++){
+    for(var i = 0; i < thermostatSamples.length; i++){
       const currentTempVal = [];
-      currentTempVal[0] = data.samples[i].timeMs;
-      currentTempVal[1] = data.samples[i].currentTemp;
+      currentTempVal[0] = thermostatSamples[i].timeMs;
+      currentTempVal[1] = thermostatSamples[i].currentTemp;
       currentTempData[i] = currentTempVal;
 
       const targetTempVal = [];
-      targetTempVal[0] = data.samples[i].timeMs;
-      targetTempVal[1] = data.samples[i].targetTemp;
+      targetTempVal[0] = thermostatSamples[i].timeMs;
+      targetTempVal[1] = thermostatSamples[i].targetTemp;
       targetTempData[i] = targetTempVal;
 
       const tstateVal = [];
-      tstateVal[0] = data.samples[i].timeMs;
-      tstateVal[1] = data.samples[i].tstate;
+      tstateVal[0] = thermostatSamples[i].timeMs;
+      tstateVal[1] = thermostatSamples[i].tstate;
       runtimeData[i] = tstateVal;
     }
     this.options.series[0].data = currentTempData;
@@ -233,7 +210,7 @@ export class OutputGraphComponent implements OnInit {
     const outsideTempSeries = [];
     for(var i = 0; i < weatherSamples.length; i++) {
       const outsideTempVal = [];
-      outsideTempVal[0] = weatherSamples[i].time;
+      outsideTempVal[0] = weatherSamples[i].timeMs;
       outsideTempVal[1] = weatherSamples[i].currentTemp;
       outsideTempSeries[i] = outsideTempVal;
     }
