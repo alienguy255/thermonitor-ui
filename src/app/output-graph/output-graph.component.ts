@@ -141,14 +141,14 @@ export class OutputGraphComponent implements OnInit {
       if (this.thermostat.id === tstatUpdateEvent.thermostatId) {
         console.log('Received tstat update, update for thermostatId=' + tstatUpdateEvent.thermostatId);
 
-        this.stockChart.series[0].addPoint([tstatUpdateEvent.time, tstatUpdateEvent.currentTemp], true, true);
-        this.stockChart.series[1].addPoint([tstatUpdateEvent.time, tstatUpdateEvent.targetTemp], true, true);
-        this.stockChart.series[3].addPoint([tstatUpdateEvent.time, tstatUpdateEvent.tstate], true, true);
+        this.stockChart.series[0].addPoint([tstatUpdateEvent.sample.timeMs, tstatUpdateEvent.sample.currentTemp], true, true);
+        this.stockChart.series[1].addPoint([tstatUpdateEvent.sample.timeMs, tstatUpdateEvent.sample.targetTemp], true, true);
+        this.stockChart.series[3].addPoint([tstatUpdateEvent.sample.timeMs, tstatUpdateEvent.sample.tstate], true, true);
 
         // TODO: should oldest point be removed? This will continue to grow memory used by the browser the longer this is updating
 
         // change status in chart title depending on if the event indicates running or not (tstate of 1 is running, 0 is idle)
-        if (tstatUpdateEvent.tstate === 1) {
+        if (tstatUpdateEvent.sample.tstate === 1) {
           this.stockChart.setTitle({text: this.thermostat.name + ' (Running)'});
         } else {
           this.stockChart.setTitle({text: this.thermostat.name + ' (Idle)'});

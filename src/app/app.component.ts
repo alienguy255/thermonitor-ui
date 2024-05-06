@@ -35,10 +35,7 @@ export class AppComponent implements OnInit, OnChanges {
 
             const tstatUpdateEvent: ThermostatUpdateEvent = {
                 thermostatId: updateBody.thermostatId,
-                tstate: updateBody.tstate,
-                currentTemp: updateBody.currentTemp,
-                targetTemp: updateBody.targetTemp,
-                time: updateBody.time
+                sample: updateBody.sample
             };
 
             that.onTstatUpdate.emit(tstatUpdateEvent);

@@ -30,15 +30,15 @@ export class Location {
 
 export class ThermostatSample {
 
-    currentTemp: string;
+    currentTemp: number;
 
-    override: string;
+    override: number;
 
-    targetTemp: string;
+    targetTemp: number;
 
-    tstate: string;
+    tstate: number;
 
-    timeMs: string;
+    timeMs: number;
 
 }
 
@@ -54,13 +54,7 @@ export interface ThermostatUpdateEvent {
 
   thermostatId: string;
 
-  tstate: number;
-
-  currentTemp: number;
-
-  targetTemp: number;
-
-  time: number;
+  sample: ThermostatSample;
 
 }
 
