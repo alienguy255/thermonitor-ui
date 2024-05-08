@@ -27,6 +27,11 @@ export class OutputGraphComponent implements OnInit {
   @Input() onTstatUpdate: EventEmitter<ThermostatUpdateEvent>;
   @Input() onWeatherUpdate: EventEmitter<WeatherUpdateEvent>;
 
+  currentIndoorTemp: number;
+  targetIndoorTemp: number;
+  runtimeMins: number;
+  currentOutdoorTemp: number;
+
   public options: any = {
     chart: {
       type: 'line',
@@ -65,7 +70,7 @@ export class OutputGraphComponent implements OnInit {
         text: 'All'
       }
       ],
-      selected: 1
+      selected: 2
     },
     xAxis: {
       events: {
@@ -134,6 +139,13 @@ export class OutputGraphComponent implements OnInit {
   ngAfterViewInit() {
       // render in after view to ensure div exists in order to fill the chart
       this.renderChart(this.thermostat.samples, this.weatherSamples, this.thermostat);
+
+      // TODO: seems like server is always returning null for last runtime data point in array
+      // TODO: also handle if the latest data point wasnt yet collected and the server returned null
+      this.currentIndoorTemp = Math.round(this.thermostat.samples[this.thermostat.samples.length - 2].currentTemp * 10) / 10;
+      this.targetIndoorTemp = Math.round(this.thermostat.samples[this.thermostat.samples.length - 2].targetTemp * 10) / 10;
+      this.currentOutdoorTemp = Math.round(this.weatherSamples[this.weatherSamples.length - 2].currentTemp * 10) / 10;
+      this.runtimeMins = this.thermostat.samples.filter(s => s.tstate === 1).reduce((sum, s) => sum + s.tstate, 0);
   }
 
   ngOnInit() {
@@ -145,7 +157,7 @@ export class OutputGraphComponent implements OnInit {
         this.stockChart.series[1].addPoint([tstatUpdateEvent.sample.timeMs, tstatUpdateEvent.sample.targetTemp], true, true);
         this.stockChart.series[3].addPoint([tstatUpdateEvent.sample.timeMs, tstatUpdateEvent.sample.tstate], true, true);
 
-        // TODO: should oldest point be removed? This will continue to grow memory used by the browser the longer this is updating
+        // TODO: Remove oldest point. This will continue to grow memory used by the browser the longer this is updating
 
         // change status in chart title depending on if the event indicates running or not (tstate of 1 is running, 0 is idle)
         if (tstatUpdateEvent.sample.tstate === 1) {
@@ -153,12 +165,18 @@ export class OutputGraphComponent implements OnInit {
         } else {
           this.stockChart.setTitle({text: this.thermostat.name + ' (Idle)'});
         }
+
+        this.currentIndoorTemp = Math.round(tstatUpdateEvent.sample.currentTemp * 10) / 10;
+        this.targetIndoorTemp = Math.round(tstatUpdateEvent.sample.targetTemp * 10) / 10;
+        this.runtimeMins = this.runtimeMins + tstatUpdateEvent.sample.tstate;
       }
     });
 
     this.onWeatherUpdate.subscribe(weatherUpdateEvent => {
       console.log('Received weather update for time=' + weatherUpdateEvent.time + ', currentTemp=' + weatherUpdateEvent.currentTemp);
       this.stockChart.series[2].addPoint([weatherUpdateEvent.time, weatherUpdateEvent.currentTemp], true, true);
+
+      this.currentOutdoorTemp = Math.round(weatherUpdateEvent.currentTemp * 10) / 10;
     });
   }
 

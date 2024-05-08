@@ -3,10 +3,31 @@ h2 {
     color: white;
 }
 
-div {
-  text-align:center
-}
-
 body {
     background-color: #1F2227;
+}
+
+app-output-graph {
+  border-radius: 25px;
+  background-color: var(--highcharts-background-color);
+  margin: 10px;
+}
+
+.location-title {
+  text-align: left;
+  margin-left: 10px;
+}
+
+.row {
+  display: flex;
+}
+
+.center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.wrapper {
+  height: calc(100vh - 20px);
 }

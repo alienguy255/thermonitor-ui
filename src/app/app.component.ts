@@ -55,7 +55,7 @@ export class AppComponent implements OnInit, OnChanges {
     });
 
     const fromTime = new Date();
-    fromTime.setDate(fromTime.getDate() - 7);
+    fromTime.setDate(fromTime.getDate() - 3);
     const toTime = new Date();
 
     this.apollo

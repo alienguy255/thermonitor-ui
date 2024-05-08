@@ -31,6 +31,7 @@ body {
 div {
   margin: 10px;
   border-radius: 25px;
+  flex-grow: 1;
 }
 
 .highcharts-background {
@@ -58,4 +59,26 @@ div {
 
 .highcharts-column-series rect.highcharts-point {
     stroke: var(--background-color);
+}
+
+.tstat-info {
+  padding-top: 55px;
+  background-color: var(--highcharts-background-color);
+}
+
+.tstat-info h3 {
+  margin: -20px;
+  font-size: 50px;
+  font-family: Helvetica,Arial,sans-serif;
+  color: var(--highcharts-neutral-color-80);
+}
+
+.tstat-info p {
+  margin-left: -17px;
+  font-family: Helvetica,Arial,sans-serif;
+  color: var(--highcharts-neutral-color-80);
+}
+
+.tstat-info-child {
+  margin-bottom: 40px;
 }
