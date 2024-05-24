@@ -1,5 +1,8 @@
-.idea/
-node_modules/
-dist/
 .DS_Store
-.angular/
+thermonitor-angular/node_modules/
+thermonitor-angular/dist/
+thermonitor-angular/.DS_Store
+thermonitor-angular/.angular/
+
+thermonitor-react/node_modules/
+thermonitor-react/.next/

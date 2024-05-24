@@ -1,0 +1,36 @@
+@import 'https://code.highcharts.com/css/highcharts.css';
+
+div .row {
+    margin: 10px;
+    overflow: hidden;
+    border-radius: 25px;
+    background-color: var(--highcharts-background-color);
+    display: flex;
+}
+
+
+  
+
+
+.first {
+  padding-top: 38px;     
+}
+
+div .tstatinfo {
+  margin: 10px 30px 10px 10px;
+  flex-grow: 1;
+  background-color: var(--highcharts-background-color);  
+}
+
+div .tstatinfo h3 {
+  font-size: 50px;
+  font-family: Helvetica,Arial,sans-serif;
+  color: var(--highcharts-neutral-color-80); 
+}
+
+div .tstatinfo p {
+  font-family: Helvetica,Arial,sans-serif;
+  color: var(--highcharts-neutral-color-80);
+  margin-top: -8px;
+  padding-bottom: 15px;  
+}
