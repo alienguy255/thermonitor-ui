@@ -213,6 +213,7 @@ const ThermostatInfo: ForwardRefRenderFunction<ThermostatInfoActions, {indoorTem
   const [runtimeMins, setRuntimeMins] = useState<number>(props.runtimeMins);
   const [lastCollectionTime, setLastCollectionTime] = useState<Date>(props.lastCollectionTime);
 
+  // TODO: this is apparently not good practice, find a better way to update the values in the info side display without re-rendering the charts
   useImperativeHandle(ref, () => ({
     updateIndoorTemp: (updatedIndoorTemp: number) => {
       setIndoorTemp(updatedIndoorTemp);
