@@ -13,11 +13,16 @@ div .row {
 
 
 .first {
-  padding-top: 38px;     
+  padding-top: 50px;     
+}
+
+.last {
+  font-size: 12px;
+  padding-top: 88px;
 }
 
 div .tstatinfo {
-  margin: 10px 30px 10px 10px;
+  margin: 10px 30px 10px 0px;
   flex-grow: 1;
   background-color: var(--highcharts-background-color);  
 }
@@ -31,6 +36,6 @@ div .tstatinfo h3 {
 div .tstatinfo p {
   font-family: Helvetica,Arial,sans-serif;
   color: var(--highcharts-neutral-color-80);
-  margin-top: -8px;
+  margin-top: -4px;
   padding-bottom: 15px;  
 }

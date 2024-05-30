@@ -9,7 +9,6 @@ import { Thermostat } from "@/types/thermostat";
 import { WeatherSample } from "@/types/samples";
 import { StompSessionProvider } from "react-stomp-hooks";
 
-// TODO: can also memoize this
 const fromTime = new Date();
 fromTime.setDate(fromTime.getDate() - 3);
 const toTime = new Date(Date.now() - 1000 * 60); // one minute ago

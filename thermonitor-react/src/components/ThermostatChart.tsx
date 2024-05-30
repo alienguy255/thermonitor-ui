@@ -1,7 +1,7 @@
 import Highcharts, {AxisSetExtremesEventObject, Chart} from 'highcharts/highstock';
 import HighchartsReact from 'highcharts-react-official';
 import styles from "./ThermostatChart.module.css";
-import { useState } from 'react';
+import { useImperativeHandle, useState, forwardRef, useRef, Ref, ForwardRefRenderFunction } from 'react';
 import { Thermostat } from '@/types/thermostat';
 import { WeatherSample } from '@/types/samples';
 import { IMessage, useSubscription } from 'react-stomp-hooks';
@@ -15,35 +15,32 @@ export default function ThermostatChart({
 }) {
 
   const [chart, setChart] = useState<Highcharts.StockChart>();
-  const [currentIndoorTemp, setCurrentIndoorTemp] = useState<number>(Math.round(thermostat.samples[thermostat.samples.length - 1].currentTemp * 10) / 10);
-  const [currentTargetTemp, setCurrentTargetTemp] = useState<number>(Math.round(thermostat.samples[thermostat.samples.length - 1].targetTemp * 10) / 10);
-  const [runtimeMins, setRuntimeMins] = useState<number>(
-    thermostat.samples
-      .filter(s => s.tstate === 1)
-      .reduce((sum, s) => sum + s.tstate, 0)
-  );
+  const childRef = useRef<ThermostatInfoActions>();
 
   useSubscription('/topic/tstat-updates', (message: IMessage) => {
     let tstatUpdateEvent: any = JSON.parse(message.body);
     if (tstatUpdateEvent.thermostatId === thermostat.id) {
+      let tstate = tstatUpdateEvent.sample.tstate;
+
       // change status in chart title depending on if the event indicates running or not (tstate of 1 is running, 0 is idle)
-      chart?.setTitle({text: thermostat.name + (tstatUpdateEvent.sample.tstate === 1 ? ' (Running)' : ' (Idle)')});
+      chart?.setTitle({text: thermostat.name + (tstate === 1 ? ' (Running)' : ' (Idle)')});
 
       // add current temp to chart and update current temp in info column:
       chart?.series[0].addPoint([tstatUpdateEvent.sample.timeMs, tstatUpdateEvent.sample.currentTemp], true, true);
-      setCurrentIndoorTemp(tstatUpdateEvent.sample.currentTemp);
+      childRef?.current?.updateIndoorTemp(tstatUpdateEvent.sample.currentTemp);
 
       chart?.series[1].addPoint([tstatUpdateEvent.sample.timeMs, tstatUpdateEvent.sample.targetTemp], true, true);
-      setCurrentTargetTemp(tstatUpdateEvent.sample.targetTemp);
+      childRef?.current?.updateTargetTemp(tstatUpdateEvent.sample.targetTemp);
 
-      chart?.series[3].addPoint([tstatUpdateEvent.sample.timeMs, tstatUpdateEvent.sample.tstate], true, true);
-      setRuntimeMins(runtimeMins + tstatUpdateEvent.sample.tstate);
+      chart?.series[3].addPoint([tstatUpdateEvent.sample.timeMs, tstate], true, true);
+      childRef?.current?.updateRuntimeMins(tstate);
+
+      childRef?.current?.updateLastCollectionTime(new Date(tstatUpdateEvent.sample.timeMs));
     }
   });
 
   useSubscription('/topic/weather-updates', (message: IMessage) => {
     let weatherUpdateEvent: any = JSON.parse(message.body);
-    console.log('received weather update event, time=' + weatherUpdateEvent.time + ', currentTemp=' + weatherUpdateEvent.currentTemp);
     chart?.series[2].addPoint([weatherUpdateEvent.time, weatherUpdateEvent.currentTemp], true, true);
   });
   
@@ -114,7 +111,7 @@ export default function ThermostatChart({
         xAxis: {
           events: {
             afterSetExtremes: (e: Highcharts.AxisSetExtremesEventObject) => {
-              Highcharts.each(Highcharts.charts, function(c: Highcharts.StockChart) {
+              Highcharts.charts.forEach((c)=> {
                 if (c !== undefined && c !== chart) {
                   c.xAxis[0].setExtremes(e.min, e.max);
                 }
@@ -184,29 +181,72 @@ export default function ThermostatChart({
 
   return (
     <div className={styles.row}>
-      
-        <HighchartsReact
+      <HighchartsReact
           highcharts={Highcharts}
           constructorType={'stockChart'}
           options={options}
           callback={(chart: Chart) => setChart(chart)}
-          containerProps={{ style: {flexGrow: 1} }}
-        />
-      
-      <div className={styles.tstatinfo}>
-        <div>
-          <h3 className={styles.first}>{currentIndoorTemp}°F</h3>
-          <p>Current Indoor Temp</p>
-        </div>
-        <div>
-          <h3>{currentTargetTemp}°F</h3>
-          <p>Current Target Temp</p>
-        </div>
-        <div>
-          <h3>{runtimeMins}</h3>
-          <p>Runtime Mins</p>
-        </div>
-      </div>
+          containerProps={{ style: {flexGrow: 1, margin: 10} }}
+      />
+      <ThermostatInfoComponent
+          ref={childRef} 
+          indoorTemp={Math.round(thermostat.samples[thermostat.samples.length - 1].currentTemp * 10) / 10}
+          targetTemp={Math.round(thermostat.samples[thermostat.samples.length - 1].targetTemp * 10) / 10}
+          runtimeMins={thermostat.samples.filter(s => s.tstate === 1).reduce((sum, s) => sum + s.tstate, 0)}
+          lastCollectionTime={new Date(thermostat.samples[thermostat.samples.length - 1].timeMs)}
+      />
     </div>
   );
 }
+
+interface ThermostatInfoActions {
+  updateIndoorTemp: (indoorTemp: number) => void;
+  updateTargetTemp: (targetTemp: number) => void;
+  updateRuntimeMins: (runtimeMins: number) => void;
+  updateLastCollectionTime: (lastCollectionTime: Date) => void;
+}
+
+const ThermostatInfo: ForwardRefRenderFunction<ThermostatInfoActions, {indoorTemp: number, targetTemp: number, runtimeMins: number, lastCollectionTime: Date}> = (props: {indoorTemp: number, targetTemp: number, runtimeMins: number, lastCollectionTime: Date}, ref: Ref<ThermostatInfoActions>) => {
+
+  const [indoorTemp, setIndoorTemp] = useState<number>(props.indoorTemp);
+  const [targetTemp, setTargetTemp] = useState<number>(props.targetTemp);
+  const [runtimeMins, setRuntimeMins] = useState<number>(props.runtimeMins);
+  const [lastCollectionTime, setLastCollectionTime] = useState<Date>(props.lastCollectionTime);
+
+  useImperativeHandle(ref, () => ({
+    updateIndoorTemp: (updatedIndoorTemp: number) => {
+      setIndoorTemp(updatedIndoorTemp);
+    },
+    updateTargetTemp: (updatedTargetTemp: number) => {
+      setTargetTemp(updatedTargetTemp);
+    },
+    updateRuntimeMins: (updatedRuntimeMins: number) => {
+      setRuntimeMins(runtimeMins + updatedRuntimeMins);
+    },
+    updateLastCollectionTime: (lastCollectionTime: Date) => {
+      setLastCollectionTime(lastCollectionTime);
+    }
+  }));
+
+  return (
+    <div className={styles.tstatinfo}>
+    <div>
+      <h3 className={styles.first}>{indoorTemp}°F</h3>
+      <p>Current Indoor Temp</p>
+    </div>
+    <div>
+      <h3>{targetTemp}°F</h3>
+      <p>Current Target Temp</p>
+    </div>
+    <div>
+      <h3>{runtimeMins}</h3>
+      <p>Runtime Mins</p>
+    </div>
+    <div className={styles.last}>
+      <p>(Data received at {lastCollectionTime.toLocaleTimeString()})</p>
+    </div>
+  </div>
+  );
+};
+
+const ThermostatInfoComponent = forwardRef(ThermostatInfo);
